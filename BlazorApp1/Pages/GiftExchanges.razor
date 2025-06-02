@@ -1,0 +1,106 @@
+﻿@page "/GiftExchanges"
+@inject HttpClient Http
+
+<PageTitle>Gift Exchanges</PageTitle>
+
+<h1>Gift Exchanges</h1>
+
+@if (_historicalGiftExchanges == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @foreach (var giftExchangeYear in _historicalGiftExchanges.OrderByDescending(d => d.Key))
+    {
+        <h2 @onclick="@(() => OnClickHandler(giftExchangeYear.Value))">
+            @giftExchangeYear.Key
+        </h2>
+    }
+
+    <GiftExchangeDetail GiftExchange=@_selectedGiftExchange></GiftExchangeDetail>
+}
+
+@code {
+    private List<GiftExchangeModel> _giftExchanges = [];
+    private List<ParticipantModel> _participants = [];
+    private List<ParticipantModel> _availableSignificantOthers = [];
+    private List<int> _vailableGiftExchangeYears = [];
+    private Dictionary<int, HistoricalGiftExchange> _historicalGiftExchanges = new Dictionary<int, HistoricalGiftExchange>();
+
+    private HistoricalGiftExchange _selectedGiftExchange;
+
+    private void OnClickHandler(HistoricalGiftExchange historicalGiftExchange)
+    {
+        _selectedGiftExchange = historicalGiftExchange;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Init();
+    }
+
+    private async Task Init()
+    {
+        _availableSignificantOthers.Clear();
+        _giftExchanges.Clear();
+        _participants.Clear();
+
+        _availableSignificantOthers = [new ParticipantModel()];
+        var secretSantaData = await Http.GetFromJsonAsync<SecretSantaData>("sample-data/secretSantaData.json");
+
+        _giftExchanges = secretSantaData.GiftExchanges.ToList();
+
+        _participants = secretSantaData.Participants.ToList();
+        _availableSignificantOthers.AddRange(_participants);
+
+        foreach (var g in _giftExchanges)
+        {
+            if (!_historicalGiftExchanges.ContainsKey(g.Year))
+            {
+                _vailableGiftExchangeYears.Add(g.Year);
+                _historicalGiftExchanges.Add(g.Year, new() { Year = g.Year });
+            }
+
+            var giver = _participants.First(p => p.Id == g.GiverId);
+            var receiver = _participants.First(p => p.Id == g.ReceiverId);
+            _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver.Name });
+        }
+    }
+
+    public class SecretSantaData
+    {
+        public GiftExchangeModel[] GiftExchanges { get; set; }
+        public ParticipantModel[] Participants { get; set; }
+    }
+
+    public class GiftExchangeModel
+    {
+        public int Year { get; set; }
+        public Guid GiverId { get; set; }
+        public Guid ReceiverId { get; set; }
+    }
+
+    public class ParticipantModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public Guid? SignificantOtherId { get; set; }
+    }
+
+    public class DisplayData
+    {
+        public int Year { get; set; }
+        public Guid GiverId { get; set; }
+        public string GiverName { get; set; }
+        public Guid ReceiverId { get; set; }
+        public string ReceiverName { get; set; }
+    }
+
+    public class HistoricalGiftExchange
+    {
+        public int Year { get; set; }
+
+        public List<DisplayData> GiftExchangeData { get; set; } = [];
+    }
+}
