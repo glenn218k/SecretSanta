@@ -14,6 +14,7 @@
     public HistoricalGiftExchange GiftExchange { get; set; }
 
     private static readonly string _emptyString = string.Empty;
+    private static readonly int _yearItIsToday = DateTime.Now.Year;
     private List<string> _displayStrings = [];
     private int _currentYear;
     private int _howManySeparatorsNeeded;
@@ -93,7 +94,8 @@
             exchanges.Remove(exchange);
             giverId = exchange.ReceiverId;
 
-            _displayStrings.Add($"{exchange.GiverName} has {exchange.ReceiverName}");
+            var midWord = exchange.Year < _yearItIsToday ? "had" : "has";
+            _displayStrings.Add($"{exchange.GiverName} {midWord} {exchange.ReceiverName}");
         }
     }
 }
