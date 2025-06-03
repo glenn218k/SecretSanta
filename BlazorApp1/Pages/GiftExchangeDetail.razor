@@ -14,13 +14,15 @@
     public HistoricalGiftExchange GiftExchange { get; set; }
 
     private static readonly string _emptyString = string.Empty;
-    private static readonly int _yearItIsToday = DateTime.Now.Year;
+    private DateTime _currentDateTime = DateTime.UtcNow;
     private List<string> _displayStrings = [];
     private int _currentYear;
     private int _howManySeparatorsNeeded;
 
     protected async override Task OnParametersSetAsync()
     {
+        _currentDateTime = DateTime.UtcNow;
+
         if (GiftExchange?.Year is int year
             && _currentYear != year)
         {
@@ -94,7 +96,8 @@
             exchanges.Remove(exchange);
             giverId = exchange.ReceiverId;
 
-            var midWord = exchange.Year < _yearItIsToday ? "had" : "has";
+            var exchangeDate = new DateTime(exchange.Year, 12, 25, 0, 0, 0, DateTimeKind.Utc);
+            var midWord = exchangeDate < _currentDateTime ? "had" : "has";
             _displayStrings.Add($"{exchange.GiverName} {midWord} {exchange.ReceiverName}");
         }
     }
