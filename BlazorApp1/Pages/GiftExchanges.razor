@@ -25,7 +25,7 @@ else
     private List<GiftExchangeModel> _giftExchanges = [];
     private List<ParticipantModel> _participants = [];
     private List<ParticipantModel> _availableSignificantOthers = [];
-    private List<int> _vailableGiftExchangeYears = [];
+    private List<int> _availableGiftExchangeYears = [];
     private Dictionary<int, HistoricalGiftExchange> _historicalGiftExchanges = new Dictionary<int, HistoricalGiftExchange>();
 
     private HistoricalGiftExchange _selectedGiftExchange;
@@ -47,7 +47,9 @@ else
         _participants.Clear();
 
         _availableSignificantOthers = [new ParticipantModel()];
-        var secretSantaData = await Http.GetFromJsonAsync<SecretSantaData>("sample-data/secretSantaData.json");
+
+        var randomid = Guid.NewGuid().ToString();
+        var secretSantaData = await Http.GetFromJsonAsync<SecretSantaData>($"sample-data/secretSantaData.json?{randomid}");
 
         _giftExchanges = secretSantaData.GiftExchanges.ToList();
 
@@ -58,7 +60,7 @@ else
         {
             if (!_historicalGiftExchanges.ContainsKey(g.Year))
             {
-                _vailableGiftExchangeYears.Add(g.Year);
+                _availableGiftExchangeYears.Add(g.Year);
                 _historicalGiftExchanges.Add(g.Year, new() { Year = g.Year });
             }
 
@@ -66,6 +68,10 @@ else
             var receiver = _participants.First(p => p.Id == g.ReceiverId);
             _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver.Name });
         }
+
+        _historicalGiftExchanges = _historicalGiftExchanges.OrderByDescending(g => g.Key).ToDictionary();
+
+        _selectedGiftExchange = _historicalGiftExchanges.FirstOrDefault().Value;
     }
 
     public class SecretSantaData
