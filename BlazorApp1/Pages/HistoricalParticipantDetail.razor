@@ -1,0 +1,75 @@
+﻿@using static BlazorApp1.Pages.GiftExchanges
+
+@if (Participant is not null)
+{
+    <h1>@Participant.Value.Key?.Name</h1>
+
+    @foreach (var s in _displayStrings)
+    {
+        <h2>@((MarkupString)@s)</h2>
+    }
+}
+@code {
+    [Parameter]
+    public KeyValuePair<ParticipantModel, List<GiftExchangeModel>>? Participant { get; set; }
+
+    [Parameter]
+    public List<ParticipantModel>? Participants { get; set; }
+
+    private static readonly string _emptyString = string.Empty;
+    private DateTime _currentDateTime = DateTime.UtcNow;
+    private List<string> _displayStrings = [];
+    private Guid _currentId;
+    private int _howManySeparatorsNeeded;
+
+    protected async override Task OnParametersSetAsync()
+    {
+        _currentDateTime = DateTime.UtcNow;
+
+        if (Participant?.Key?.Id is Guid id
+            && _currentId != id)
+        {
+            UpdateDisplay();
+            _currentId = id;
+        }
+    }
+
+    private void UpdateDisplay()
+    {
+        _displayStrings.Clear();
+
+        if (Participants is not List<ParticipantModel> participants
+            || participants.Count < 1
+            || Participant?.Key is not ParticipantModel participant
+            || (Participant?.Value is not List<GiftExchangeModel> giftExchanges))
+        {
+            return;
+        }
+
+        foreach (var recipient in participants.OrderBy(p => p.Name))
+        {
+            if (recipient.Id == participant.Id)
+            {
+                continue;
+            }
+
+            var sigOtherNotationPre = string.Empty;
+            var sigOtherNotationPost = string.Empty;
+            if (recipient.Id == participant.SignificantOtherId)
+            {
+                sigOtherNotationPre = @"&#9829; ";
+                sigOtherNotationPost = @" &#9829;";
+            }
+
+            var exchangesGivenToRecipient = giftExchanges.Where(e => e.ReceiverId == recipient.Id).Select(e => e.Year).OrderByDescending(y => y).ToList();
+            string years = string.Empty;
+
+            if (exchangesGivenToRecipient.Count > 0)
+            {
+                years = $" (" + string.Join(", ", exchangesGivenToRecipient) + ")";
+            }
+
+            _displayStrings.Add($"{sigOtherNotationPre}{recipient.Name}{sigOtherNotationPost}: {exchangesGivenToRecipient.Count}{years}");
+        }
+    }
+}

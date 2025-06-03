@@ -3,22 +3,43 @@
 
 <PageTitle>Secret Santas</PageTitle>
 
-<h1>Secret Santas</h1>
-
-@if (_historicalGiftExchanges == null)
+@if (_historicalGiftExchanges is null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
+    <h1>Secret Santas by Year</h1>
+
     @foreach (var giftExchangeYear in _historicalGiftExchanges.OrderByDescending(d => d.Key))
     {
-        <button @onclick="@(() => OnClickHandler(giftExchangeYear.Value))">
+        <button @onclick="@(() => HistoricalGiftExchangesOnClickHandler(giftExchangeYear.Value))">
             @giftExchangeYear.Key
         </button>
     }
 
     <GiftExchangeDetail GiftExchange=@_selectedGiftExchange></GiftExchangeDetail>
+}
+
+@if (_historicalParticipants is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <br />
+    <br />
+    <br />
+    <h1>Secret Santas by Giver</h1>
+
+    @foreach (var participant in _historicalParticipants.OrderBy(d => d.Key.Name))
+    {
+        <button @onclick="@(() => HistoricalParticipantsOnClickHandler(participant))">
+            @participant.Key.Name
+        </button>
+    }
+
+    <HistoricalParticipantDetail Participants=@_participants Participant=@_selectedParticipant></HistoricalParticipantDetail>
 }
 
 @code {
@@ -27,12 +48,19 @@ else
     private List<ParticipantModel> _availableSignificantOthers = [];
     private List<int> _availableGiftExchangeYears = [];
     private Dictionary<int, HistoricalGiftExchange> _historicalGiftExchanges = new Dictionary<int, HistoricalGiftExchange>();
+    private Dictionary<ParticipantModel, List<GiftExchangeModel>> _historicalParticipants = new Dictionary<ParticipantModel, List<GiftExchangeModel>>();
 
     private HistoricalGiftExchange _selectedGiftExchange;
+    private KeyValuePair<ParticipantModel, List<GiftExchangeModel>> _selectedParticipant;
 
-    private void OnClickHandler(HistoricalGiftExchange historicalGiftExchange)
+    private void HistoricalGiftExchangesOnClickHandler(HistoricalGiftExchange historicalGiftExchange)
     {
         _selectedGiftExchange = historicalGiftExchange;
+    }
+
+    private void HistoricalParticipantsOnClickHandler(KeyValuePair<ParticipantModel, List<GiftExchangeModel>> historicalParticipant)
+    {
+        _selectedParticipant = historicalParticipant;
     }
 
     protected override async Task OnInitializedAsync()
@@ -45,6 +73,8 @@ else
         _availableSignificantOthers.Clear();
         _giftExchanges.Clear();
         _participants.Clear();
+        _historicalGiftExchanges.Clear();
+        _historicalParticipants.Clear();
 
         _availableSignificantOthers = [new ParticipantModel()];
 
@@ -67,6 +97,16 @@ else
             var giver = _participants.First(p => p.Id == g.GiverId);
             var receiver = _participants.First(p => p.Id == g.ReceiverId);
             _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver.Name });
+        }
+
+        foreach (var p in _participants)
+        {
+            if (!_historicalParticipants.ContainsKey(p))
+            {
+                _historicalParticipants.Add(p, []);
+            }
+
+            _historicalParticipants[p].AddRange(_giftExchanges.Where(g => g.GiverId == p.Id).ToList());
         }
 
         _historicalGiftExchanges = _historicalGiftExchanges.OrderByDescending(g => g.Key).ToDictionary();
@@ -92,11 +132,25 @@ else
         }
     }
 
-    public class ParticipantModel
+    public class ParticipantModel : IEquatable<ParticipantModel>
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
         public Guid? SignificantOtherId { get; set; }
+
+        public bool Equals(ParticipantModel other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+            else if (Id == other.Id)
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         public override string ToString()
         {
