@@ -29,12 +29,12 @@
         if (Participant?.Key?.Id is Guid id
             && _currentId != id)
         {
-            UpdateDisplay();
+            await UpdateDisplay();
             _currentId = id;
         }
     }
 
-    private void UpdateDisplay()
+    private Task UpdateDisplay()
     {
         _displayStrings.Clear();
 
@@ -43,7 +43,7 @@
             || Participant?.Key is not ParticipantModel participant
             || (Participant?.Value is not List<GiftExchangeModel> giftExchanges))
         {
-            return;
+            return Task.CompletedTask;
         }
 
         foreach (var recipient in participants.OrderBy(p => p.Name))
@@ -71,5 +71,7 @@
 
             _displayStrings.Add($"{sigOtherNotationPre}{recipient.Name}{sigOtherNotationPost}: {exchangesGivenToRecipient.Count}{years}");
         }
+
+        return Task.CompletedTask;
     }
 }

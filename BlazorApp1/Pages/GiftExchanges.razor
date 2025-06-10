@@ -50,7 +50,7 @@ else
     private Dictionary<int, HistoricalGiftExchange> _historicalGiftExchanges = new Dictionary<int, HistoricalGiftExchange>();
     private Dictionary<ParticipantModel, List<GiftExchangeModel>> _historicalParticipants = new Dictionary<ParticipantModel, List<GiftExchangeModel>>();
 
-    private HistoricalGiftExchange _selectedGiftExchange;
+    private HistoricalGiftExchange? _selectedGiftExchange;
     private KeyValuePair<ParticipantModel, List<GiftExchangeModel>> _selectedParticipant;
 
     private void HistoricalGiftExchangesOnClickHandler(HistoricalGiftExchange historicalGiftExchange)
@@ -77,13 +77,17 @@ else
         _historicalParticipants.Clear();
 
         _availableSignificantOthers = [new ParticipantModel()];
-
         var randomid = Guid.NewGuid().ToString();
         var secretSantaData = await Http.GetFromJsonAsync<SecretSantaData>($"sample-data/secretSantaData.json?{randomid}");
 
-        _giftExchanges = secretSantaData.GiftExchanges.ToList();
+        if (secretSantaData is null)
+        {
+            return;
+        }
 
-        _participants = secretSantaData.Participants.ToList();
+        _giftExchanges = secretSantaData.GiftExchanges?.ToList() ?? [];
+
+        _participants = secretSantaData.Participants?.ToList() ?? [];
         _availableSignificantOthers.AddRange(_participants);
 
         foreach (var g in _giftExchanges)
@@ -94,9 +98,9 @@ else
                 _historicalGiftExchanges.Add(g.Year, new() { Year = g.Year });
             }
 
-            var giver = _participants.First(p => p.Id == g.GiverId);
-            var receiver = _participants.First(p => p.Id == g.ReceiverId);
-            _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver.Name });
+            var giver = _participants.FirstOrDefault(p => p.Id == g.GiverId);
+            var receiver = _participants.FirstOrDefault(p => p.Id == g.ReceiverId);
+            _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver?.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver?.Name, Skipped = g.Skipped, SkippedReason = g.SkippedReason });
         }
 
         foreach (var p in _participants)
@@ -116,8 +120,8 @@ else
 
     public class SecretSantaData
     {
-        public GiftExchangeModel[] GiftExchanges { get; set; }
-        public ParticipantModel[] Participants { get; set; }
+        public GiftExchangeModel[]? GiftExchanges { get; set; }
+        public ParticipantModel[]? Participants { get; set; }
     }
 
     public class GiftExchangeModel
@@ -126,19 +130,33 @@ else
         public Guid GiverId { get; set; }
         public Guid ReceiverId { get; set; }
 
+        public bool Skipped { get; set; }
+
+        public string? SkippedReason { get; set; }
+
         public override string ToString()
         {
-            return $"{Year}, {GiverId}, {ReceiverId}";
+            string message;
+            if (Skipped)
+            {
+                message = string.IsNullOrWhiteSpace(SkippedReason) ? "Skipped" : SkippedReason;
+            }
+            else
+            {
+                message = $"{Year}, {GiverId}, {ReceiverId}";
+            }
+
+            return message;
         }
     }
 
     public class ParticipantModel : IEquatable<ParticipantModel>
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public Guid? SignificantOtherId { get; set; }
 
-        public bool Equals(ParticipantModel other)
+        public bool Equals(ParticipantModel? other)
         {
             if (other is null)
             {
@@ -162,9 +180,11 @@ else
     {
         public int Year { get; set; }
         public Guid GiverId { get; set; }
-        public string GiverName { get; set; }
+        public string? GiverName { get; set; }
         public Guid ReceiverId { get; set; }
-        public string ReceiverName { get; set; }
+        public string? ReceiverName { get; set; }
+        public bool Skipped { get; set; }
+        public string? SkippedReason { get; set; }
     }
 
     public class HistoricalGiftExchange

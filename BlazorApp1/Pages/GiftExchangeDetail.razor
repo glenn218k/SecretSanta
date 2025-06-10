@@ -11,7 +11,7 @@
 }
 @code {
     [Parameter]
-    public HistoricalGiftExchange GiftExchange { get; set; }
+    public HistoricalGiftExchange? GiftExchange { get; set; }
 
     private static readonly string _emptyString = string.Empty;
     private DateTime _currentDateTime = DateTime.UtcNow;
@@ -26,7 +26,7 @@
         if (GiftExchange?.Year is int year
             && _currentYear != year)
         {
-            UpdateDisplay([.. GiftExchange.GiftExchangeData]);
+            await UpdateDisplay([.. GiftExchange.GiftExchangeData]);
             _currentYear = year;
         }
     }
@@ -60,7 +60,7 @@
         return retVal;
     }
 
-    private void UpdateDisplay(IList<DisplayData> giftExchanges)
+    private Task UpdateDisplay(IList<DisplayData> giftExchanges)
     {
         _displayStrings.Clear();
         _howManySeparatorsNeeded = DetermineCycleCount([.. giftExchanges]) - 1;
@@ -71,7 +71,13 @@
 
         if (firstExchange is null)
         {
-            return;
+            return Task.CompletedTask;
+        }
+        else if (firstExchange.Skipped)
+        {
+            _displayStrings.Add(string.IsNullOrWhiteSpace(firstExchange.SkippedReason) ? "Skipped: Reason Unknown" : firstExchange.SkippedReason);
+
+            return Task.CompletedTask;
         }
 
         var giverId = firstExchange.GiverId;
@@ -85,7 +91,7 @@
             {
                 if (!exchanges.Any())
                 {
-                    return;
+                    return Task.CompletedTask;
                 }
 
                 exchange = exchanges.First();
