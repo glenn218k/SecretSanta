@@ -8,8 +8,6 @@
     }
 </style>
 
-<PageTitle>Secret Santas</PageTitle>
-
 @if (_historicalGiftExchanges is null)
 {
     <p><em>Loading...</em></p>
@@ -48,6 +46,7 @@ else
 
     <HistoricalParticipantDetail Participants=@_participants Participant=@_selectedParticipant></HistoricalParticipantDetail>
 }
+
 
 @code {
     private List<GiftExchangeModel> _giftExchanges = [];
