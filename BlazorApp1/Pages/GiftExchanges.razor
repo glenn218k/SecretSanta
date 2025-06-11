@@ -1,6 +1,13 @@
 ﻿@page "/"
 @inject HttpClient Http
 
+<style>
+    body{
+        background-color: palegreen;
+        font-family: 'Comic Sans MS';
+    }
+</style>
+
 <PageTitle>Secret Santas</PageTitle>
 
 @if (_historicalGiftExchanges is null)
