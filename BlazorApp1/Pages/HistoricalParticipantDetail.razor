@@ -80,6 +80,13 @@
                 years = $" (" + string.Join(", ", exchangesGivenToRecipient) + ")";
             }
 
+            if (exchangesGivenToRecipient.Count < 1
+                && recipient.Obsolete)
+            {
+                // don't show obsolete recipients if they weren't given a gift
+                continue;
+            }
+
             _displayStrings.Add($"{sigOtherNotationPre}{recipient.Name}{sigOtherNotationPost}: {exchangesGivenToRecipient.Count}{years}");
         }
 

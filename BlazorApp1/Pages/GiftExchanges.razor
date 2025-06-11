@@ -5,6 +5,27 @@
     body{
         background-color: palegreen;
         font-family: 'Comic Sans MS';
+        overflow: auto;
+    }
+
+    .buttonClassOdd {
+        background-color: red;
+        color: darkgreen;
+    }
+
+    .buttonClassEven {
+        background-color: darkgreen;
+        color: red;
+    }
+
+    .buttonClassOdd:hover {
+        background-color: yellow;
+        color: black;
+    }
+
+    .buttonClassEven:hover {
+        background-color: yellow;
+        color: black;
     }
 </style>
 
@@ -18,7 +39,7 @@ else
 
     @foreach (var giftExchangeYear in _historicalGiftExchanges.OrderByDescending(d => d.Key))
     {
-        <button @onclick="@(() => HistoricalGiftExchangesOnClickHandler(giftExchangeYear.Value))">
+        <button class="@ButtonClass(_historicalGiftExchangeDisplayCount++)" @onclick="@(() => HistoricalGiftExchangesOnClickHandler(giftExchangeYear.Value))">
             @giftExchangeYear.Key
         </button>
     }
@@ -39,7 +60,7 @@ else
 
     @foreach (var participant in _historicalParticipants.Where(p => !p.Key.Obsolete).OrderBy(d => d.Key.Name))
     {
-        <button @onclick="@(() => HistoricalParticipantsOnClickHandler(participant))">
+        <button class="@ButtonClass(@_historicalParticipantDisplayCount++)" @onclick="@(() => HistoricalParticipantsOnClickHandler(participant))">
             @participant.Key.Name
         </button>
     }
@@ -47,8 +68,9 @@ else
     <HistoricalParticipantDetail Participants=@_participants Participant=@_selectedParticipant></HistoricalParticipantDetail>
 }
 
-
 @code {
+    private int _historicalGiftExchangeDisplayCount = 0;
+    private int _historicalParticipantDisplayCount = 0;
     private List<GiftExchangeModel> _giftExchanges = [];
     private List<ParticipantModel> _participants = [];
     private List<ParticipantModel> _availableSignificantOthers = [];
@@ -58,6 +80,16 @@ else
 
     private HistoricalGiftExchange? _selectedGiftExchange;
     private KeyValuePair<ParticipantModel, List<GiftExchangeModel>> _selectedParticipant;
+
+    private string ButtonClass(int i)
+    {
+        if (i % 2 == 0)
+        {
+            return "buttonClassEven";
+        }
+
+        return "buttonClassOdd";
+    }
 
     private void HistoricalGiftExchangesOnClickHandler(HistoricalGiftExchange historicalGiftExchange)
     {
@@ -71,6 +103,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _historicalGiftExchangeDisplayCount = 0;
+        _historicalParticipantDisplayCount = 0;
         await Init();
     }
 
