@@ -7,7 +7,7 @@
     int i = 0;
     @foreach (var s in _displayStrings)
     {
-        <h2 style="color:@TextColor(i++)">@s</h2>
+        <h2 style="color:@TextColor(i++)">@((MarkupString)@s)</h2>
     }
 }
 @code {
@@ -114,8 +114,16 @@
             giverId = exchange.ReceiverId;
 
             var exchangeDate = new DateTime(exchange.Year, 12, 25, 0, 0, 0, DateTimeKind.Utc);
-            var midWord = exchangeDate < _currentDateTime ? "had" : "has";
-            _displayStrings.Add($"{exchange.GiverName} {midWord} {exchange.ReceiverName}");
+            bool isPast = exchangeDate < _currentDateTime;
+            var midWord = isPast ? "had" : "has";
+            var amazonLink = string.Empty;
+
+            if (!isPast && !string.IsNullOrWhiteSpace(exchange.ReceiverAmazonLink))
+            {
+                amazonLink = $" | <a href=\"{exchange.ReceiverAmazonLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{exchange.ReceiverName}'s Amazon Wishlist</a>";
+            }
+            
+            _displayStrings.Add($"{exchange.GiverName} {midWord} {exchange.ReceiverName}{amazonLink}");
         }
     }
 }

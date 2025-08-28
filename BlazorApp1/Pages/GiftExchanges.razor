@@ -142,7 +142,7 @@ else
 
             var giver = _participants.FirstOrDefault(p => p.Id == g.GiverId);
             var receiver = _participants.FirstOrDefault(p => p.Id == g.ReceiverId);
-            _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver?.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver?.Name, Skipped = g.Skipped, SkippedReason = g.SkippedReason });
+            _historicalGiftExchanges[g.Year].GiftExchangeData.Add(new() { Year = g.Year, GiverId = g.GiverId, GiverName = giver?.Name, ReceiverId = g.ReceiverId, ReceiverName = receiver?.Name, ReceiverAmazonLink = receiver?.AmazonLink, Skipped = g.Skipped, SkippedReason = g.SkippedReason });
         }
 
         foreach (var p in _participants)
@@ -198,6 +198,7 @@ else
         public string? Name { get; set; }
         public Guid? SignificantOtherId { get; set; }
         public bool Obsolete { get; set; }
+        public string? AmazonLink { get; set; }
 
         public bool Equals(ParticipantModel? other)
         {
@@ -215,7 +216,7 @@ else
 
         public override string ToString()
         {
-            return $"{Id}, {Name}, {SignificantOtherId}";
+            return $"{Id}, {Name}, {SignificantOtherId}, {Obsolete}, {AmazonLink}";
         }
     }
 
@@ -226,6 +227,7 @@ else
         public string? GiverName { get; set; }
         public Guid ReceiverId { get; set; }
         public string? ReceiverName { get; set; }
+        public string? ReceiverAmazonLink { get; set; }
         public bool Skipped { get; set; }
         public string? SkippedReason { get; set; }
     }
