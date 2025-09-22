@@ -5,6 +5,14 @@
     <h1>@_currentYear</h1>
 
     int i = 0;
+    if (!_isPast)
+    {
+        @foreach (var s in _displayStringsForEveryone)
+        {
+            <h2 style="color:@TextColor(i++)">@((MarkupString)@s)</h2>
+        }
+    }
+
     @foreach (var s in _displayStrings)
     {
         <h2 style="color:@TextColor(i++)">@((MarkupString)@s)</h2>
@@ -14,11 +22,16 @@
     [Parameter]
     public HistoricalGiftExchange? GiftExchange { get; set; }
 
+    [Parameter]
+    public List<ParticipantModel>? ForEveryoneParticipants { get; set; }
+
     private static readonly string _emptyString = string.Empty;
     private DateTime _currentDateTime = DateTime.UtcNow;
     private List<string> _displayStrings = [];
+    private List<string> _displayStringsForEveryone = [];
     private int _currentYear;
     private int _howManySeparatorsNeeded;
+    private bool _isPast;
 
     private string TextColor(int i)
     {
@@ -37,8 +50,27 @@
         if (GiftExchange?.Year is int year
             && _currentYear != year)
         {
+            var exchangeDate = new DateTime(year, 12, 25, 0, 0, 0, DateTimeKind.Utc);
+            _isPast = exchangeDate < _currentDateTime;
+
             await UpdateDisplay([.. GiftExchange.GiftExchangeData]);
             _currentYear = year;
+        }
+
+        if (ForEveryoneParticipants is List<ParticipantModel> forEveryoneParticipants)
+        {
+            _displayStringsForEveryone.Clear();
+
+            foreach(var participant in forEveryoneParticipants.OrderBy(p => p.Name))
+            {
+                var amazonLink = string.Empty;
+                if (!string.IsNullOrWhiteSpace(participant.AmazonLink))
+                {
+                    amazonLink = $" | <a href=\"{participant.AmazonLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{participant.Name}'s Amazon Wishlist</a>";
+                }
+
+                _displayStringsForEveryone.Add($"Everyone has {participant.Name}{amazonLink}");
+            }
         }
     }
 
@@ -113,12 +145,10 @@
             exchanges.Remove(exchange);
             giverId = exchange.ReceiverId;
 
-            var exchangeDate = new DateTime(exchange.Year, 12, 25, 0, 0, 0, DateTimeKind.Utc);
-            bool isPast = exchangeDate < _currentDateTime;
-            var midWord = isPast ? "had" : "has";
+            var midWord = _isPast ? "had" : "has";
             var amazonLink = string.Empty;
 
-            if (!isPast && !string.IsNullOrWhiteSpace(exchange.ReceiverAmazonLink))
+            if (!_isPast && !string.IsNullOrWhiteSpace(exchange.ReceiverAmazonLink))
             {
                 amazonLink = $" | <a href=\"{exchange.ReceiverAmazonLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{exchange.ReceiverName}'s Amazon Wishlist</a>";
             }

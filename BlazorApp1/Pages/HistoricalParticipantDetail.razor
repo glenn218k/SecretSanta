@@ -59,7 +59,8 @@
 
         foreach (var recipient in participants.OrderBy(p => p.Name))
         {
-            if (recipient.Id == participant.Id)
+            if (recipient.Id == participant.Id
+            || recipient.ForEveryone)
             {
                 continue;
             }

@@ -46,7 +46,7 @@ else
         </button>
     }
 
-    <GiftExchangeDetail GiftExchange=@_selectedGiftExchange></GiftExchangeDetail>
+    <GiftExchangeDetail ForEveryoneParticipants=@_availableForEveryones GiftExchange=@_selectedGiftExchange></GiftExchangeDetail>
 }
 
 @if (_historicalParticipants is null)
@@ -60,7 +60,7 @@ else
     <br />
     <h1>Secret Santas by Giver</h1>
 
-    @foreach (var participant in _historicalParticipants.Where(p => !p.Key.Obsolete).OrderBy(d => d.Key.Name))
+    @foreach (var participant in _historicalParticipants.Where(p => !p.Key.Obsolete && !p.Key.ForEveryone).OrderBy(d => d.Key.Name))
     {
         <button class="@ButtonClass(@_historicalParticipantDisplayCount++)" @onclick="@(() => HistoricalParticipantsOnClickHandler(participant))">
             @participant.Key.Name
@@ -76,6 +76,7 @@ else
     private List<GiftExchangeModel> _giftExchanges = [];
     private List<ParticipantModel> _participants = [];
     private List<ParticipantModel> _availableSignificantOthers = [];
+    private List<ParticipantModel> _availableForEveryones = [];
     private List<int> _availableGiftExchangeYears = [];
     private Dictionary<int, HistoricalGiftExchange> _historicalGiftExchanges = new Dictionary<int, HistoricalGiftExchange>();
     private Dictionary<ParticipantModel, List<GiftExchangeModel>> _historicalParticipants = new Dictionary<ParticipantModel, List<GiftExchangeModel>>();
@@ -113,6 +114,7 @@ else
     private async Task Init()
     {
         _availableSignificantOthers.Clear();
+        _availableForEveryones.Clear();
         _giftExchanges.Clear();
         _participants.Clear();
         _historicalGiftExchanges.Clear();
@@ -131,6 +133,7 @@ else
 
         _participants = secretSantaData.Participants?.ToList() ?? [];
         _availableSignificantOthers.AddRange(_participants);
+        _availableForEveryones.AddRange(_participants.Where(p => p.ForEveryone).ToList());
 
         foreach (var g in _giftExchanges)
         {
@@ -199,6 +202,7 @@ else
         public Guid? SignificantOtherId { get; set; }
         public bool Obsolete { get; set; }
         public string? AmazonLink { get; set; }
+        public bool ForEveryone { get; set; }
 
         public bool Equals(ParticipantModel? other)
         {
@@ -216,7 +220,7 @@ else
 
         public override string ToString()
         {
-            return $"{Id}, {Name}, {SignificantOtherId}, {Obsolete}, {AmazonLink}";
+            return $"{Id}, {Name}, {SignificantOtherId}, {Obsolete}, {AmazonLink}, {ForEveryone}";
         }
     }
 
